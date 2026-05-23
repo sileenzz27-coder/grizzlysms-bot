@@ -302,9 +302,16 @@ async function getHeroSmsStatus(apiKey, activationId) {
     return { status: result };
   }
 
-  if (result.sms && Array.isArray(result.sms) && result.sms.length > 0) {
-    const code = result.sms[0].code;
-    return { code, status: 'STATUS_OK' };
+  if (result.sms) {
+    let code;
+    if (Array.isArray(result.sms) && result.sms.length > 0) {
+      code = result.sms[0].code;
+    } else if (typeof result.sms === 'object' && result.sms.code) {
+      code = result.sms.code;
+    }
+    if (code) {
+      return { code, status: 'STATUS_OK' };
+    }
   }
 
   return { status: 'STATUS_WAIT_CODE' };
