@@ -1,5 +1,5 @@
 const { EmbedBuilder, ButtonBuilder, ButtonStyle, ActionRowBuilder } = require('discord.js');
-const { getStatus, setStatus, get5SimStatus, cancel5SimOrder } = require('./grizzlyAPI');
+const { getStatus, setStatus, get5SimStatus, cancel5SimOrder, getHeroSmsStatus, cancelHeroSmsOrder } = require('./grizzlyAPI');
 const activationStore = require('./activationStore');
 const { formatPhoneNumber } = require('./formatPhone');
 
@@ -25,9 +25,14 @@ function startPolling(client, interaction, activationId, userId, username, phone
     pollCount++;
 
     try {
-      const statusResult = provider === '5sim'
-        ? await get5SimStatus(process.env.FIVESIM_API_KEY, activationId)
-        : await getStatus(process.env.GRIZZLY_API_KEY, activationId);
+      let statusResult;
+      if (provider === '5sim') {
+        statusResult = await get5SimStatus(process.env.FIVESIM_API_KEY, activationId);
+      } else if (provider === 'herosms') {
+        statusResult = await getHeroSmsStatus(process.env.HEROSMS_API_KEY, activationId);
+      } else {
+        statusResult = await getStatus(process.env.GRIZZLY_API_KEY, activationId);
+      }
 
       if (statusResult.error) {
         if (pollCount < MAX_POLLS) {
@@ -96,6 +101,8 @@ function startPolling(client, interaction, activationId, userId, username, phone
       } else {
         if (provider === '5sim') {
           await cancel5SimOrder(process.env.FIVESIM_API_KEY, activationId);
+        } else if (provider === 'herosms') {
+          await cancelHeroSmsOrder(process.env.HEROSMS_API_KEY, activationId);
         } else {
           await setStatus(process.env.GRIZZLY_API_KEY, activationId, -1);
         }

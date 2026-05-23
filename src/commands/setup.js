@@ -24,7 +24,12 @@ const setup = {
       .setLabel('📱 Service 2')
       .setStyle(ButtonStyle.Secondary);
 
-    const row = new ActionRowBuilder().addComponents(service1Btn, service2Btn);
+    const service3Btn = new ButtonBuilder()
+      .setCustomId('ig_service_3_btn')
+      .setLabel('📱 Service 3')
+      .setStyle(ButtonStyle.Secondary);
+
+    const row = new ActionRowBuilder().addComponents(service1Btn, service2Btn, service3Btn);
 
     await interaction.reply({
       embeds: [setupEmbed],

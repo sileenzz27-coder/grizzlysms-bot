@@ -3,6 +3,7 @@ const { URL } = require('url');
 
 const API_BASE = 'https://api.grizzlysms.com/stubs/handler_api.php';
 const FIVESIM_BASE = 'https://5sim.net/v1/user';
+const HEROSMS_BASE = 'https://hero-sms.com/stubs/handler_api.php';
 
 function grizzlyRequest(params) {
   return new Promise((resolve) => {
@@ -76,6 +77,54 @@ function fiveSimRequest(apiKey, endpoint) {
 
     request.on('error', (err) => {
       console.error(`[5SIM] Request Error: ${err.message}`);
+      resolve({ error: 'NETWORK_ERROR', details: err.message });
+    });
+
+    request.end();
+  });
+}
+
+function heroSmsRequest(apiKey, params) {
+  return new Promise((resolve) => {
+    console.log(`[HEROSMS] API Key present: ${apiKey ? 'YES' : 'NO'}, Key length: ${apiKey ? apiKey.length : 0}`);
+
+    const queryParams = new URLSearchParams({ ...params, api_key: apiKey });
+    const urlString = `${HEROSMS_BASE}?${queryParams.toString()}`;
+    const parsedUrl = new URL(urlString);
+
+    const options = {
+      hostname: parsedUrl.hostname,
+      path: parsedUrl.pathname + parsedUrl.search,
+      method: 'GET',
+      headers: {
+        'User-Agent': 'GrizzlyBot/1.0',
+      },
+    };
+
+    console.log(`[HEROSMS] Request URL: ${urlString}`);
+
+    const request = https.request(options, (res) => {
+      let data = '';
+
+      res.on('data', (chunk) => {
+        data += chunk;
+      });
+
+      res.on('end', () => {
+        console.log(`[HEROSMS] Status: ${res.statusCode}, Response: ${data}`);
+        try {
+          const parsed = JSON.parse(data);
+          resolve(parsed);
+        } catch (e) {
+          // hero-sms puede devolver texto plano en algunos casos
+          console.error(`[HEROSMS] Parse Error: ${e.message}, Response: ${data}`);
+          resolve({ error: data.trim() || 'INVALID_JSON', details: data });
+        }
+      });
+    });
+
+    request.on('error', (err) => {
+      console.error(`[HEROSMS] Request Error: ${err.message}`);
       resolve({ error: 'NETWORK_ERROR', details: err.message });
     });
 
@@ -207,6 +256,76 @@ async function finish5SimOrder(apiKey, orderId) {
   return { success: !result.error, result };
 }
 
+async function getHeroSmsNumber(apiKey, service = 'ig', country = '187') {
+  const result = await heroSmsRequest(apiKey, {
+    action: 'getNumberV2',
+    service,
+    country,
+  });
+
+  if (result.activationId && result.phoneNumber) {
+    return {
+      success: true,
+      activationId: result.activationId,
+      phoneNumber: result.phoneNumber,
+      activationCost: result.activationCost,
+    };
+  }
+
+  return {
+    success: false,
+    error: result.error || 'UNKNOWN_ERROR',
+  };
+}
+
+async function getHeroSmsStatus(apiKey, activationId) {
+  const result = await heroSmsRequest(apiKey, {
+    action: 'getStatusV2',
+    id: activationId,
+  });
+
+  if (result.error) {
+    return { error: result.error };
+  }
+
+  if (typeof result === 'string') {
+    if (result.startsWith('STATUS_OK:')) {
+      const code = result.split(':')[1];
+      return { code, status: 'STATUS_OK' };
+    }
+    if (result === 'STATUS_WAIT_CODE' || result === 'STATUS_WAIT_RESEND') {
+      return { status: result };
+    }
+    if (result === 'STATUS_CANCEL') {
+      return { status: 'STATUS_CANCEL' };
+    }
+    return { status: result };
+  }
+
+  if (result.sms && Array.isArray(result.sms) && result.sms.length > 0) {
+    const code = result.sms[0].code;
+    return { code, status: 'STATUS_OK' };
+  }
+
+  return { status: 'STATUS_WAIT_CODE' };
+}
+
+async function cancelHeroSmsOrder(apiKey, activationId) {
+  const result = await heroSmsRequest(apiKey, {
+    action: 'cancelActivation',
+    id: activationId,
+  });
+  return { success: !result.error, result };
+}
+
+async function finishHeroSmsOrder(apiKey, activationId) {
+  const result = await heroSmsRequest(apiKey, {
+    action: 'finishActivation',
+    id: activationId,
+  });
+  return { success: !result.error, result };
+}
+
 function getErrorMessage(error) {
   const messages = {
     NO_NUMBERS: 'No numbers available right now. Try again in a few minutes.',
@@ -238,4 +357,8 @@ module.exports = {
   get5SimStatus,
   cancel5SimOrder,
   finish5SimOrder,
+  getHeroSmsNumber,
+  getHeroSmsStatus,
+  cancelHeroSmsOrder,
+  finishHeroSmsOrder,
 };
