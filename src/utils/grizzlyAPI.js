@@ -36,6 +36,8 @@ function grizzlyRequest(params) {
 
 function fiveSimRequest(apiKey, endpoint) {
   return new Promise((resolve) => {
+    console.log(`[5SIM] API Key present: ${apiKey ? 'YES' : 'NO'}, Key length: ${apiKey ? apiKey.length : 0}`);
+
     const urlString = `${FIVESIM_BASE}${endpoint}`;
     const parsedUrl = new URL(urlString);
 
@@ -49,6 +51,8 @@ function fiveSimRequest(apiKey, endpoint) {
         'User-Agent': 'GrizzlyBot/1.0',
       },
     };
+
+    console.log(`[5SIM] Request URL: ${urlString}`);
 
     const request = https.request(options, (res) => {
       let data = '';
