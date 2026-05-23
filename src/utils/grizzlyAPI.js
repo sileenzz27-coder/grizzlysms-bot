@@ -403,9 +403,10 @@ async function getSmspinverifyNumber(apiKey, app = 'instagram', country = 'USA')
 
 async function getSmspinverifyStatus(apiKey, numberId, phoneNumber) {
   const result = await smspinverifyRequest(apiKey, 'get_sms', {
-    app: '14471',
+    app: 'instagram',
     country: 'USA',
-    number: phoneNumber
+    number: phoneNumber,
+    n_id: numberId
   });
 
   if (typeof result === 'string' && result.match(/\d+\s*\d+/)) {
