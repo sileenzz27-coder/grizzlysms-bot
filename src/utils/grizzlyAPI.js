@@ -62,9 +62,10 @@ function fiveSimRequest(apiKey, endpoint) {
         try {
           const parsed = JSON.parse(data);
           resolve(parsed);
-        } catch {
-          console.error(`[5SIM] JSON Parse Error: ${data}`);
-          resolve({ error: 'INVALID_JSON', details: data });
+        } catch (e) {
+          // 5sims devuelve errores como texto plano (ej: "no free phones", "bad country")
+          console.error(`[5SIM] Parse Error: ${e.message}, Response: ${data}`);
+          resolve({ error: data.trim() || 'INVALID_JSON', details: data });
         }
       });
     });
@@ -147,7 +148,7 @@ async function setStatus(apiKey, activationId, status) {
 }
 
 async function get5SimNumber(apiKey, product = 'instagram') {
-  const result = await fiveSimRequest(apiKey, `/buy/activation/us/any/${product}`);
+  const result = await fiveSimRequest(apiKey, `/buy/activation/usa/any/${product}`);
 
   if (result.id && result.phone) {
     return {
@@ -211,9 +212,17 @@ function getErrorMessage(error) {
     SERVICE_UNAVAILABLE: 'The service is temporarily unavailable. Try again later.',
     NETWORK_ERROR: 'Network error. Try again in a moment.',
     UNKNOWN_ERROR: 'An unknown error occurred. Contact an admin.',
+    'no free phones': 'No USA numbers available right now. Try again in a few minutes.',
+    'bad country': 'Invalid country code. Contact an admin.',
+    'bad operator': 'Invalid operator. Contact an admin.',
+    'no product': 'Invalid product. Contact an admin.',
+    'not enough user balance': 'Insufficient balance on the account. Contact an admin.',
+    'not enough rating': 'Account rating too low. Contact an admin.',
+    'server offline': 'Service temporarily offline. Try again later.',
   };
 
-  return messages[error] || messages.UNKNOWN_ERROR;
+  const lowerError = String(error).toLowerCase().trim();
+  return messages[lowerError] || messages[error] || messages.UNKNOWN_ERROR;
 }
 
 module.exports = {
