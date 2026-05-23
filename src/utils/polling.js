@@ -1,5 +1,5 @@
 const { EmbedBuilder, ButtonBuilder, ButtonStyle, ActionRowBuilder } = require('discord.js');
-const { getStatus, setStatus, get5SimStatus, cancel5SimOrder, getHeroSmsStatus, cancelHeroSmsOrder } = require('./grizzlyAPI');
+const { getStatus, setStatus, get5SimStatus, cancel5SimOrder, getHeroSmsStatus, cancelHeroSmsOrder, getSmspinverifyStatus, rejectSmspinverifyNumber } = require('./grizzlyAPI');
 const activationStore = require('./activationStore');
 const { formatPhoneNumber } = require('./formatPhone');
 
@@ -30,6 +30,8 @@ function startPolling(client, interaction, activationId, userId, username, phone
         statusResult = await get5SimStatus(process.env.FIVESIM_API_KEY, activationId);
       } else if (provider === 'herosms') {
         statusResult = await getHeroSmsStatus(process.env.HEROSMS_API_KEY, activationId);
+      } else if (provider === 'smspinverify') {
+        statusResult = await getSmspinverifyStatus(process.env.SMSPINVERIFY_API_KEY, activationId, phoneNumber);
       } else {
         statusResult = await getStatus(process.env.GRIZZLY_API_KEY, activationId);
       }
@@ -103,6 +105,11 @@ function startPolling(client, interaction, activationId, userId, username, phone
           await cancel5SimOrder(process.env.FIVESIM_API_KEY, activationId);
         } else if (provider === 'herosms') {
           await cancelHeroSmsOrder(process.env.HEROSMS_API_KEY, activationId);
+        } else if (provider === 'smspinverify') {
+          const activation = activationStore.get(activationId);
+          if (activation) {
+            await rejectSmspinverifyNumber(process.env.SMSPINVERIFY_API_KEY, activationId, activation.phoneNumber);
+          }
         } else {
           await setStatus(process.env.GRIZZLY_API_KEY, activationId, -1);
         }

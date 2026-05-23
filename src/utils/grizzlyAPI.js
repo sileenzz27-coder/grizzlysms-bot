@@ -4,6 +4,7 @@ const { URL } = require('url');
 const API_BASE = 'https://api.grizzlysms.com/stubs/handler_api.php';
 const FIVESIM_BASE = 'https://5sim.net/v1/user';
 const HEROSMS_BASE = 'https://hero-sms.com/stubs/handler_api.php';
+const SMSPINVERIFY_BASE = 'https://api.smspinverify.com/user/';
 
 function grizzlyRequest(params) {
   return new Promise((resolve) => {
@@ -333,6 +334,106 @@ async function finishHeroSmsOrder(apiKey, activationId) {
   return { success: !result.error, result };
 }
 
+function smspinverifyRequest(apiKey, endpoint, params = {}) {
+  return new Promise((resolve) => {
+    console.log(`[SMSPINVERIFY] API Key present: ${apiKey ? 'YES' : 'NO'}`);
+
+    const queryParams = new URLSearchParams({
+      customer: apiKey,
+      ...params
+    });
+    const urlString = `${SMSPINVERIFY_BASE}${endpoint}.php?${queryParams.toString()}`;
+    const parsedUrl = new URL(urlString);
+
+    const options = {
+      hostname: parsedUrl.hostname,
+      path: parsedUrl.pathname + parsedUrl.search,
+      method: 'GET',
+      headers: {
+        'User-Agent': 'GrizzlyBot/1.0',
+      },
+    };
+
+    console.log(`[SMSPINVERIFY] Request URL: ${urlString}`);
+
+    const request = https.request(options, (res) => {
+      let data = '';
+
+      res.on('data', (chunk) => {
+        data += chunk;
+      });
+
+      res.on('end', () => {
+        console.log(`[SMSPINVERIFY] Status: ${res.statusCode}, Response: ${data}`);
+        resolve(data);
+      });
+    });
+
+    request.on('error', (err) => {
+      console.error(`[SMSPINVERIFY] Request Error: ${err.message}`);
+      resolve({ error: 'NETWORK_ERROR', details: err.message });
+    });
+
+    request.end();
+  });
+}
+
+async function getSmspinverifyNumber(apiKey, app = 'instagram', country = 'USA') {
+  const result = await smspinverifyRequest(apiKey, 'get_number', {
+    app: '14471',
+    country,
+    shownid: 1,
+    duration: '15 minutes'
+  });
+
+  if (typeof result === 'string' && result.includes('|')) {
+    const [phoneNumber, numberId] = result.split('|');
+    return {
+      success: true,
+      numberId,
+      phoneNumber,
+    };
+  }
+
+  return {
+    success: false,
+    error: result || 'UNKNOWN_ERROR',
+  };
+}
+
+async function getSmspinverifyStatus(apiKey, numberId, phoneNumber) {
+  const result = await smspinverifyRequest(apiKey, 'get_sms', {
+    app: '14471',
+    country: 'USA',
+    number: phoneNumber
+  });
+
+  if (typeof result === 'string' && result.match(/\d{6}/)) {
+    const code = result.match(/\d{6}/)[0];
+    return { code, status: 'STATUS_OK' };
+  }
+
+  if (typeof result === 'string' && result.toLowerCase().includes('not received')) {
+    return { status: 'STATUS_WAIT_CODE' };
+  }
+
+  if (typeof result === 'string' && result.toLowerCase().includes('error')) {
+    return { error: result };
+  }
+
+  return { status: 'STATUS_WAIT_CODE' };
+}
+
+async function rejectSmspinverifyNumber(apiKey, numberId, phoneNumber) {
+  const result = await smspinverifyRequest(apiKey, 'reject_code', {
+    number: phoneNumber,
+    n_id: numberId,
+    country: 'USA',
+    app: 'instagram'
+  });
+  return { success: !result.includes('error'), result };
+}
+
 function getErrorMessage(error) {
   const messages = {
     NO_NUMBERS: 'No numbers available right now. Try again in a few minutes.',
@@ -368,4 +469,7 @@ module.exports = {
   getHeroSmsStatus,
   cancelHeroSmsOrder,
   finishHeroSmsOrder,
+  getSmspinverifyNumber,
+  getSmspinverifyStatus,
+  rejectSmspinverifyNumber,
 };

@@ -1,5 +1,5 @@
 const { EmbedBuilder, ButtonBuilder, ButtonStyle, ActionRowBuilder } = require('discord.js');
-const { getNumber, setStatus, getErrorMessage, get5SimNumber, finish5SimOrder, cancel5SimOrder, getHeroSmsNumber, finishHeroSmsOrder, cancelHeroSmsOrder } = require('../utils/grizzlyAPI');
+const { getNumber, setStatus, getErrorMessage, get5SimNumber, finish5SimOrder, cancel5SimOrder, getHeroSmsNumber, finishHeroSmsOrder, cancelHeroSmsOrder, getSmspinverifyNumber, rejectSmspinverifyNumber } = require('../utils/grizzlyAPI');
 const activationStore = require('../utils/activationStore');
 const { startPolling, logToAdmin } = require('../utils/polling');
 const { formatPhoneNumber } = require('../utils/formatPhone');
@@ -179,6 +179,64 @@ async function handleButtonClick(interaction) {
     return;
   }
 
+  if (customId === 'ig_service_4_btn') {
+    const user = interaction.user;
+
+    await interaction.deferReply({ ephemeral: true });
+
+    console.log(`[${new Date().toISOString()}] 🟣 Requesting Smspinverify number for ${user.username}...`);
+    const result = await getSmspinverifyNumber(process.env.SMSPINVERIFY_API_KEY, 'Instagram', 'USA');
+    console.log(`[${new Date().toISOString()}] Result:`, result);
+
+    if (!result.success) {
+      const errorMessage = getErrorMessage(result.error);
+      console.error(`[${new Date().toISOString()}] ❌ Error: ${result.error}`);
+      await interaction.editReply({
+        content: `❌ **Error**: ${errorMessage}`,
+      });
+      return;
+    }
+
+    const { numberId, phoneNumber } = result;
+
+    activationStore.set(numberId, {
+      userId: user.id,
+      username: user.username,
+      phoneNumber,
+      provider: 'smspinverify',
+    });
+
+    const formattedPhone = formatPhoneNumber(phoneNumber);
+
+    const numberEmbed = new EmbedBuilder()
+      .setColor('#9370DB')
+      .setTitle('📱 Your Number is Ready!')
+      .addFields(
+        { name: '🇺🇸 Phone Number', value: `\`${formattedPhone}\``, inline: false },
+        { name: '⏳ Status', value: 'Waiting for SMS code...', inline: false },
+        { name: '📝 Next Step', value: 'Enter this number on Instagram. The SMS code will arrive here automatically (up to 20 minutes).\n\n**Copy and paste the number above on Instagram.**', inline: false }
+      )
+      .setFooter({ text: 'Service 4' })
+      .setTimestamp();
+
+    const cancelBtn = new ButtonBuilder()
+      .setCustomId(`num_cancel_${numberId}`)
+      .setLabel('❌ Cancel')
+      .setStyle(ButtonStyle.Danger)
+      .setDisabled(false);
+
+    const row = new ActionRowBuilder().addComponents(cancelBtn);
+
+    await interaction.editReply({ embeds: [numberEmbed], components: [row] });
+
+    await logToAdmin(interaction.client, `📱 **${user.username}** requested a number — \`${formattedPhone}\``);
+
+    activationStore.set(`${numberId}_time`, Date.now());
+
+    startPolling(interaction.client, interaction, numberId, user.id, user.username, phoneNumber, 'smspinverify');
+    return;
+  }
+
   if (customId.startsWith('num_cancel_')) {
     const activationId = customId.replace('num_cancel_', '');
     const activation = activationStore.get(activationId);
@@ -213,6 +271,8 @@ async function handleButtonClick(interaction) {
         await cancel5SimOrder(process.env.FIVESIM_API_KEY, activationId);
       } else if (activation.provider === 'herosms') {
         await cancelHeroSmsOrder(process.env.HEROSMS_API_KEY, activationId);
+      } else if (activation.provider === 'smspinverify') {
+        await rejectSmspinverifyNumber(process.env.SMSPINVERIFY_API_KEY, activationId, activation.phoneNumber);
       } else {
         await setStatus(process.env.GRIZZLY_API_KEY, activationId, -1);
       }
@@ -255,6 +315,8 @@ async function handleButtonClick(interaction) {
         await finish5SimOrder(process.env.FIVESIM_API_KEY, activationId);
       } else if (activation.provider === 'herosms') {
         await finishHeroSmsOrder(process.env.HEROSMS_API_KEY, activationId);
+      } else if (activation.provider === 'smspinverify') {
+        // Smspinverify numbers auto-complete after code confirmation
       } else {
         await setStatus(process.env.GRIZZLY_API_KEY, activationId, 6);
       }
