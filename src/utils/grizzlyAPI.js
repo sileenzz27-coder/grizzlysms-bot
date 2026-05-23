@@ -379,7 +379,7 @@ function smspinverifyRequest(apiKey, endpoint, params = {}) {
 }
 
 async function getSmspinverifyNumber(apiKey, app = 'instagram', country = 'USA') {
-  const result = await smspinverifyRequest(apiKey, 'json/get_number', {
+  const result = await smspinverifyRequest(apiKey, 'user/get_number', {
     app: 'instagram',
     country,
     shownid: 1,
@@ -424,7 +424,7 @@ async function getSmspinverifyStatus(apiKey, numberId, phoneNumber) {
 }
 
 async function rejectSmspinverifyNumber(apiKey, numberId, phoneNumber) {
-  const result = await smspinverifyRequest(apiKey, 'json/reject_code', {
+  const result = await smspinverifyRequest(apiKey, 'user/reject_code', {
     number: phoneNumber,
     n_id: numberId,
     country: 'USA',
