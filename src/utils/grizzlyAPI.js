@@ -132,7 +132,7 @@ async function setStatus(apiKey, activationId, status) {
 }
 
 async function get5SimNumber(apiKey, product = 'instagram') {
-  const result = await fiveSimRequest(apiKey, `/buy/activation/any/any/${product}`);
+  const result = await fiveSimRequest(apiKey, `/buy/activation/us/any/${product}`);
 
   if (result.id && result.phone) {
     return {
