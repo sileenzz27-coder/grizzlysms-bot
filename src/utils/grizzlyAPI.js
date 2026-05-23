@@ -408,8 +408,9 @@ async function getSmspinverifyStatus(apiKey, numberId, phoneNumber) {
     number: phoneNumber
   });
 
-  if (typeof result === 'string' && result.match(/\d{6}/)) {
-    const code = result.match(/\d{6}/)[0];
+  if (typeof result === 'string' && result.match(/\d+\s*\d+/)) {
+    const codeWithSpace = result.match(/\d+\s*\d+/)[0];
+    const code = codeWithSpace.replace(/\s+/g, '');
     return { code, status: 'STATUS_OK' };
   }
 
