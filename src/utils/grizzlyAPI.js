@@ -4,7 +4,7 @@ const { URL } = require('url');
 const API_BASE = 'https://api.grizzlysms.com/stubs/handler_api.php';
 const FIVESIM_BASE = 'https://5sim.net/v1/user';
 const HEROSMS_BASE = 'https://hero-sms.com/stubs/handler_api.php';
-const SMSPINVERIFY_BASE = 'https://api.smspinverify.com/user/';
+const SMSPINVERIFY_BASE = 'https://api.smspinverify.com/';
 
 function grizzlyRequest(params) {
   return new Promise((resolve) => {
@@ -379,7 +379,7 @@ function smspinverifyRequest(apiKey, endpoint, params = {}) {
 }
 
 async function getSmspinverifyNumber(apiKey, app = 'instagram', country = 'USA') {
-  const result = await smspinverifyRequest(apiKey, 'get_number', {
+  const result = await smspinverifyRequest(apiKey, 'json/get_number', {
     app: 'instagram',
     country,
     shownid: 1,
@@ -402,10 +402,7 @@ async function getSmspinverifyNumber(apiKey, app = 'instagram', country = 'USA')
 }
 
 async function getSmspinverifyStatus(apiKey, numberId, phoneNumber) {
-  const result = await smspinverifyRequest(apiKey, 'get_sms', {
-    app: 'instagram',
-    country: 'USA',
-    number: phoneNumber,
+  const result = await smspinverifyRequest(apiKey, 'json/get_sms', {
     n_id: numberId
   });
 
@@ -427,7 +424,7 @@ async function getSmspinverifyStatus(apiKey, numberId, phoneNumber) {
 }
 
 async function rejectSmspinverifyNumber(apiKey, numberId, phoneNumber) {
-  const result = await smspinverifyRequest(apiKey, 'reject_code', {
+  const result = await smspinverifyRequest(apiKey, 'json/reject_code', {
     number: phoneNumber,
     n_id: numberId,
     country: 'USA',
