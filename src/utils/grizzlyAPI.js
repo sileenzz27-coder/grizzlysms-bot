@@ -380,7 +380,7 @@ function smspinverifyRequest(apiKey, endpoint, params = {}) {
 
 async function getSmspinverifyNumber(apiKey, app = 'instagram', country = 'USA') {
   const result = await smspinverifyRequest(apiKey, 'get_number', {
-    app: '14471',
+    app: 'instagram',
     country,
     shownid: 1,
     duration: '15 minutes'
