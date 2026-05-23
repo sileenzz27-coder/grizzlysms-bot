@@ -10,7 +10,7 @@ const setup = {
     const setupEmbed = new EmbedBuilder()
       .setColor('#5865F2')
       .setTitle('📱 Get a Temporary Phone Number')
-      .setDescription('Click the button below to request a temporary USA phone number for Instagram verification.')
+      .setDescription('Click a button below to request a temporary USA phone number for Instagram verification.')
       .setFooter({ text: 'GrizzlySMS Bot' })
       .setTimestamp();
 
@@ -19,7 +19,12 @@ const setup = {
       .setLabel('📱 Get a Number')
       .setStyle(ButtonStyle.Primary);
 
-    const row = new ActionRowBuilder().addComponents(getNumberBtn);
+    const get5SimBtn = new ButtonBuilder()
+      .setCustomId('ig_get_5sim_btn')
+      .setLabel('📱 Get 5Sims Number')
+      .setStyle(ButtonStyle.Secondary);
+
+    const row = new ActionRowBuilder().addComponents(getNumberBtn, get5SimBtn);
 
     await interaction.reply({
       embeds: [setupEmbed],

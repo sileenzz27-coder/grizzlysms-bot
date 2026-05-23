@@ -1,5 +1,5 @@
 const { EmbedBuilder, ButtonBuilder, ButtonStyle, ActionRowBuilder } = require('discord.js');
-const { getStatus, setStatus } = require('./grizzlyAPI');
+const { getStatus, setStatus, get5SimStatus, cancel5SimOrder } = require('./grizzlyAPI');
 const activationStore = require('./activationStore');
 const { formatPhoneNumber } = require('./formatPhone');
 
@@ -18,14 +18,16 @@ async function logToAdmin(client, message) {
   }
 }
 
-function startPolling(client, interaction, activationId, userId, username, phoneNumber) {
+function startPolling(client, interaction, activationId, userId, username, phoneNumber, provider = 'grizzly') {
   let pollCount = 0;
 
   const poll = async () => {
     pollCount++;
 
     try {
-      const statusResult = await getStatus(process.env.GRIZZLY_API_KEY, activationId);
+      const statusResult = provider === '5sim'
+        ? await get5SimStatus(process.env.FIVESIM_API_KEY, activationId)
+        : await getStatus(process.env.GRIZZLY_API_KEY, activationId);
 
       if (statusResult.error) {
         if (pollCount < MAX_POLLS) {
@@ -92,12 +94,16 @@ function startPolling(client, interaction, activationId, userId, username, phone
       if (pollCount < MAX_POLLS) {
         setTimeout(poll, POLLING_INTERVAL);
       } else {
-        await setStatus(process.env.GRIZZLY_API_KEY, activationId, -1);
+        if (provider === '5sim') {
+          await cancel5SimOrder(process.env.FIVESIM_API_KEY, activationId);
+        } else {
+          await setStatus(process.env.GRIZZLY_API_KEY, activationId, -1);
+        }
 
         const timeoutEmbed = new EmbedBuilder()
           .setColor('#ffc107')
           .setTitle('⏰ Request Timed Out')
-          .setDescription('No SMS received after 10 minutes. The number has been released and you won\'t be charged.')
+          .setDescription('No SMS received after 20 minutes. The number has been released and you won\'t be charged.')
           .setFooter({ text: 'GrizzlySMS Bot' });
 
         try {

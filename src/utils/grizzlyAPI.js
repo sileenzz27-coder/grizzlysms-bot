@@ -1,6 +1,7 @@
 const https = require('https');
 
 const API_BASE = 'https://api.grizzlysms.com/stubs/handler_api.php';
+const FIVESIM_BASE = 'https://5sim.net/v1/user';
 
 function grizzlyRequest(params) {
   return new Promise((resolve) => {
@@ -24,6 +25,36 @@ function grizzlyRequest(params) {
           resolve(JSON.parse(data));
         } catch {
           resolve({ error: data });
+        }
+      });
+    }).on('error', (err) => {
+      resolve({ error: 'NETWORK_ERROR', details: err.message });
+    });
+  });
+}
+
+function fiveSimRequest(apiKey, endpoint) {
+  return new Promise((resolve) => {
+    const url = `${FIVESIM_BASE}${endpoint}`;
+    const options = {
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Accept': 'application/json',
+      },
+    };
+
+    https.get(url, options, (res) => {
+      let data = '';
+
+      res.on('data', (chunk) => {
+        data += chunk;
+      });
+
+      res.on('end', () => {
+        try {
+          resolve(JSON.parse(data));
+        } catch {
+          resolve({ error: 'INVALID_JSON', details: data });
         }
       });
     }).on('error', (err) => {
@@ -100,6 +131,62 @@ async function setStatus(apiKey, activationId, status) {
   return { success: !result.error, result };
 }
 
+async function get5SimNumber(apiKey, product = 'instagram') {
+  const result = await fiveSimRequest(apiKey, `/buy/activation/any/any/${product}`);
+
+  if (result.id && result.phone) {
+    return {
+      success: true,
+      orderId: result.id,
+      phoneNumber: result.phone,
+    };
+  }
+
+  return {
+    success: false,
+    error: result.error || 'UNKNOWN_ERROR',
+  };
+}
+
+async function get5SimStatus(apiKey, orderId) {
+  const result = await fiveSimRequest(apiKey, `/check/${orderId}`);
+
+  if (result.error) {
+    return { error: result.error };
+  }
+
+  if (!result.status) {
+    return { error: 'INVALID_RESPONSE' };
+  }
+
+  const status = result.status.toUpperCase();
+
+  if (status === 'RECEIVED' && result.sms && result.sms.length > 0) {
+    const code = result.sms[0].code;
+    return { code, status: 'STATUS_OK' };
+  }
+
+  if (status === 'PENDING') {
+    return { status: 'STATUS_WAIT_CODE' };
+  }
+
+  if (status === 'CANCELED') {
+    return { status: 'STATUS_CANCEL' };
+  }
+
+  return { status: 'STATUS_WAIT_CODE' };
+}
+
+async function cancel5SimOrder(apiKey, orderId) {
+  const result = await fiveSimRequest(apiKey, `/cancel/${orderId}`);
+  return { success: !result.error, result };
+}
+
+async function finish5SimOrder(apiKey, orderId) {
+  const result = await fiveSimRequest(apiKey, `/finish/${orderId}`);
+  return { success: !result.error, result };
+}
+
 function getErrorMessage(error) {
   const messages = {
     NO_NUMBERS: 'No numbers available right now. Try again in a few minutes.',
@@ -114,4 +201,13 @@ function getErrorMessage(error) {
   return messages[error] || messages.UNKNOWN_ERROR;
 }
 
-module.exports = { getNumber, getStatus, setStatus, getErrorMessage };
+module.exports = {
+  getNumber,
+  getStatus,
+  setStatus,
+  getErrorMessage,
+  get5SimNumber,
+  get5SimStatus,
+  cancel5SimOrder,
+  finish5SimOrder,
+};
