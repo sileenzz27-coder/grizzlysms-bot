@@ -50,7 +50,7 @@ function fiveSimRequest(apiKey, endpoint) {
       },
     };
 
-    https.request(options, (res) => {
+    const request = https.request(options, (res) => {
       let data = '';
 
       res.on('data', (chunk) => {
@@ -58,15 +58,23 @@ function fiveSimRequest(apiKey, endpoint) {
       });
 
       res.on('end', () => {
+        console.log(`[5SIM] Status: ${res.statusCode}, Response: ${data}`);
         try {
-          resolve(JSON.parse(data));
+          const parsed = JSON.parse(data);
+          resolve(parsed);
         } catch {
+          console.error(`[5SIM] JSON Parse Error: ${data}`);
           resolve({ error: 'INVALID_JSON', details: data });
         }
       });
-    }).on('error', (err) => {
+    });
+
+    request.on('error', (err) => {
+      console.error(`[5SIM] Request Error: ${err.message}`);
       resolve({ error: 'NETWORK_ERROR', details: err.message });
-    }).end();
+    });
+
+    request.end();
   });
 }
 
