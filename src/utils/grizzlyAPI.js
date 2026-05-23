@@ -1,4 +1,5 @@
 const https = require('https');
+const { URL } = require('url');
 
 const API_BASE = 'https://api.grizzlysms.com/stubs/handler_api.php';
 const FIVESIM_BASE = 'https://5sim.net/v1/user';
@@ -35,15 +36,21 @@ function grizzlyRequest(params) {
 
 function fiveSimRequest(apiKey, endpoint) {
   return new Promise((resolve) => {
-    const url = `${FIVESIM_BASE}${endpoint}`;
+    const urlString = `${FIVESIM_BASE}${endpoint}`;
+    const parsedUrl = new URL(urlString);
+
     const options = {
+      hostname: parsedUrl.hostname,
+      path: parsedUrl.pathname + parsedUrl.search,
+      method: 'GET',
       headers: {
         'Authorization': `Bearer ${apiKey}`,
         'Accept': 'application/json',
+        'User-Agent': 'GrizzlyBot/1.0',
       },
     };
 
-    https.get(url, options, (res) => {
+    https.request(options, (res) => {
       let data = '';
 
       res.on('data', (chunk) => {
@@ -59,7 +66,7 @@ function fiveSimRequest(apiKey, endpoint) {
       });
     }).on('error', (err) => {
       resolve({ error: 'NETWORK_ERROR', details: err.message });
-    });
+    }).end();
   });
 }
 
