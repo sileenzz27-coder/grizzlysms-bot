@@ -7,7 +7,7 @@ const { formatPhoneNumber } = require('../utils/formatPhone');
 async function handleButtonClick(interaction) {
   const customId = interaction.customId;
 
-  if (customId === 'ig_get_number_btn') {
+  if (customId === 'ig_service_1_btn') {
     const user = interaction.user;
 
     await interaction.deferReply({ ephemeral: true });
@@ -44,7 +44,7 @@ async function handleButtonClick(interaction) {
         { name: '⏳ Status', value: 'Waiting for SMS code...', inline: false },
         { name: '📝 Next Step', value: 'Enter this number on Instagram. The SMS code will arrive here automatically (up to 20 minutes).\n\n**Copy and paste the number above on Instagram.**', inline: false }
       )
-      .setFooter({ text: 'GrizzlySMS Bot' })
+      .setFooter({ text: 'Service 1' })
       .setTimestamp();
 
     const cancelBtn = new ButtonBuilder()
@@ -63,7 +63,7 @@ async function handleButtonClick(interaction) {
     return;
   }
 
-  if (customId === 'ig_get_5sim_btn') {
+  if (customId === 'ig_service_2_btn') {
     const user = interaction.user;
 
     await interaction.deferReply({ ephemeral: true });
@@ -94,13 +94,13 @@ async function handleButtonClick(interaction) {
 
     const numberEmbed = new EmbedBuilder()
       .setColor('#3498db')
-      .setTitle('📱 Your 5Sims Number is Ready!')
+      .setTitle('📱 Your Number is Ready!')
       .addFields(
         { name: '🇺🇸 Phone Number', value: `\`${formattedPhone}\``, inline: false },
         { name: '⏳ Status', value: 'Waiting for SMS code...', inline: false },
         { name: '📝 Next Step', value: 'Enter this number on Instagram. The SMS code will arrive here automatically (up to 20 minutes).\n\n**Copy and paste the number above on Instagram.**', inline: false }
       )
-      .setFooter({ text: 'GrizzlySMS Bot - 5Sims' })
+      .setFooter({ text: 'Service 2' })
       .setTimestamp();
 
     const cancelBtn = new ButtonBuilder()
@@ -113,7 +113,7 @@ async function handleButtonClick(interaction) {
 
     await interaction.editReply({ embeds: [numberEmbed], components: [row] });
 
-    await logToAdmin(interaction.client, `🔷 **${user.username}** requested a 5Sims number — \`${formattedPhone}\``);
+    await logToAdmin(interaction.client, `📱 **${user.username}** requested a number — \`${formattedPhone}\``);
 
     activationStore.set(`${orderId}_time`, Date.now());
 
@@ -161,7 +161,7 @@ async function handleButtonClick(interaction) {
         .setColor('#dc3545')
         .setTitle('❌ Number Released')
         .setDescription('No charges applied.')
-        .setFooter({ text: 'GrizzlySMS Bot' });
+        .setFooter({ text: 'Service' });
 
       await interaction.editReply({ embeds: [cancelEmbed], components: [] });
 
@@ -201,7 +201,7 @@ async function handleButtonClick(interaction) {
         .setColor('#2ecc71')
         .setTitle('✅ Complete!')
         .setDescription('Registration successful.')
-        .setFooter({ text: 'GrizzlySMS Bot' });
+        .setFooter({ text: 'Service' });
 
       await interaction.editReply({ embeds: [completeEmbed], components: [] });
 

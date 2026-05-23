@@ -49,7 +49,7 @@ const getnumber = {
         { name: '⏳ Status', value: 'Waiting for SMS code...', inline: false },
         { name: '📝 Next Step', value: 'Enter this number on Instagram. The SMS code will arrive here automatically (up to 20 minutes).\n\n**Copy and paste the number above on Instagram.**', inline: false }
       )
-      .setFooter({ text: 'GrizzlySMS Bot' })
+      .setFooter({ text: 'Service' })
       .setTimestamp();
 
     const cancelBtn = new ButtonBuilder()

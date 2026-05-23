@@ -14,17 +14,17 @@ const setup = {
       .setFooter({ text: 'GrizzlySMS Bot' })
       .setTimestamp();
 
-    const getNumberBtn = new ButtonBuilder()
-      .setCustomId('ig_get_number_btn')
-      .setLabel('📱 Get a Number')
+    const service1Btn = new ButtonBuilder()
+      .setCustomId('ig_service_1_btn')
+      .setLabel('📱 Service 1')
       .setStyle(ButtonStyle.Primary);
 
-    const get5SimBtn = new ButtonBuilder()
-      .setCustomId('ig_get_5sim_btn')
-      .setLabel('📱 Get 5Sims Number')
+    const service2Btn = new ButtonBuilder()
+      .setCustomId('ig_service_2_btn')
+      .setLabel('📱 Service 2')
       .setStyle(ButtonStyle.Secondary);
 
-    const row = new ActionRowBuilder().addComponents(getNumberBtn, get5SimBtn);
+    const row = new ActionRowBuilder().addComponents(service1Btn, service2Btn);
 
     await interaction.reply({
       embeds: [setupEmbed],
