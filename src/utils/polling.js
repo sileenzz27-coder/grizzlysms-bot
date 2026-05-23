@@ -4,7 +4,7 @@ const activationStore = require('./activationStore');
 const { formatPhoneNumber } = require('./formatPhone');
 
 const POLLING_INTERVAL = 10000;
-const MAX_POLLS = 60;
+const MAX_POLLS = 120;
 
 async function logToAdmin(client, message) {
   const adminChannelId = process.env.ADMIN_LOG_CHANNEL_ID || '1507695666896568351';
