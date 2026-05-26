@@ -337,7 +337,8 @@ async function finishHeroSmsOrder(apiKey, activationId) {
 async function getHeroSmsPhysicNumber(apiKey, country = '187') {
   const result = await heroSmsRequest(apiKey, {
     action: 'getNumberV2',
-    service: 'physic',
+    service: 'ig',
+    operator: 'physic',
     country,
   });
 
