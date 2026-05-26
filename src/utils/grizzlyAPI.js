@@ -645,8 +645,11 @@ async function getSmsPoolStatus(apiKey, orderId) {
     orderid: orderId,
   });
 
+  console.log(`[SMSPOOL] getSmsPoolStatus result:`, result);
+
   // Check if SMS was received (sms field contains the code)
   if (result.sms && result.sms !== '') {
+    console.log(`[SMSPOOL] SMS received:`, result.sms);
     return {
       status: 'STATUS_OK',
       code: result.sms,
@@ -655,10 +658,12 @@ async function getSmsPoolStatus(apiKey, orderId) {
 
   // If no errors and no SMS yet, keep waiting
   if (!result.error) {
+    console.log(`[SMSPOOL] Waiting for SMS...`);
     return { status: 'STATUS_WAIT_CODE' };
   }
 
   // Error case
+  console.log(`[SMSPOOL] Error:`, result.error);
   return { error: result.error || 'UNKNOWN_ERROR' };
 }
 
