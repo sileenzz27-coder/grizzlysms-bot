@@ -435,7 +435,7 @@ async function rejectSmspinverifyNumber(apiKey, numberId, phoneNumber) {
 
 async function getSmspinverifyNumber4(apiKey, country = 'USA') {
   const result = await smspinverifyRequest(apiKey, 'user/get_number', {
-    app: 'Instagram 4',
+    app: '1731',
     country,
     shownid: 1,
     duration: '15 minutes'
@@ -483,7 +483,7 @@ async function rejectSmspinverifyNumber4(apiKey, numberId, phoneNumber) {
     number: phoneNumber,
     n_id: numberId,
     country: 'USA',
-    app: 'Instagram 4'
+    app: '1731'
   });
   return { success: !result.includes('error'), result };
 }
