@@ -295,7 +295,7 @@ async function handleButtonClick(interaction) {
     return;
   }
 
-  if (customId === 'ig_service_7_btn') {
+  if (customId === 'ig_service_6_btn') {
     const user = interaction.user;
 
     await interaction.deferReply({ ephemeral: true });
@@ -332,7 +332,7 @@ async function handleButtonClick(interaction) {
         { name: '⏳ Status', value: 'Waiting for SMS code...', inline: false },
         { name: '📝 Next Step', value: 'Enter this number on Instagram. The SMS code will arrive here automatically (up to 20 minutes).\n\n**Copy and paste the number above on Instagram.**', inline: false }
       )
-      .setFooter({ text: 'Service 7' })
+      .setFooter({ text: 'Service 6' })
       .setTimestamp();
 
     const cancelBtn = new ButtonBuilder()
