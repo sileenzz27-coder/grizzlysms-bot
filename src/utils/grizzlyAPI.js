@@ -117,9 +117,21 @@ function heroSmsRequest(apiKey, params) {
           const parsed = JSON.parse(data);
           resolve(parsed);
         } catch (e) {
-          // hero-sms puede devolver texto plano en algunos casos
-          console.error(`[HEROSMS] Parse Error: ${e.message}, Response: ${data}`);
-          resolve({ error: data.trim() || 'INVALID_JSON', details: data });
+          // hero-sms devuelve texto plano en algunos casos (NO_NUMBERS, NO_AVAILABLE, etc)
+          const errorMsg = data.trim();
+          console.error(`[HEROSMS] Parse Error: ${e.message}, Response: ${errorMsg}`);
+          // Si comienza con "ACCESS_NUMBER", es un número válido pero sin parsear
+          if (errorMsg.startsWith('ACCESS_NUMBER')) {
+            const parts = errorMsg.split(':');
+            if (parts.length === 3) {
+              resolve({
+                activationId: parts[1],
+                phoneNumber: parts[2]
+              });
+              return;
+            }
+          }
+          resolve({ error: errorMsg || 'INVALID_JSON', details: data });
         }
       });
     });
