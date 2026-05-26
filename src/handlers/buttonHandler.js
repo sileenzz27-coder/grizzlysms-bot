@@ -68,64 +68,6 @@ async function handleButtonClick(interaction) {
 
     await interaction.deferReply({ ephemeral: true });
 
-    console.log(`[${new Date().toISOString()}] 🔷 Requesting 5Sims number for ${user.username}...`);
-    const result = await get5SimNumber(process.env.FIVESIM_API_KEY, 'instagram');
-    console.log(`[${new Date().toISOString()}] Result:`, result);
-
-    if (!result.success) {
-      const errorMessage = getErrorMessage(result.error);
-      console.error(`[${new Date().toISOString()}] ❌ Error: ${result.error}`);
-      await interaction.editReply({
-        content: `❌ **Error**: ${errorMessage}`,
-      });
-      return;
-    }
-
-    const { orderId, phoneNumber } = result;
-
-    activationStore.set(orderId, {
-      userId: user.id,
-      username: user.username,
-      phoneNumber,
-      provider: '5sim',
-    });
-
-    const formattedPhone = formatPhoneNumber(phoneNumber);
-
-    const numberEmbed = new EmbedBuilder()
-      .setColor('#3498db')
-      .setTitle('📱 Your Number is Ready!')
-      .addFields(
-        { name: '🇺🇸 Phone Number', value: `\`${formattedPhone}\``, inline: false },
-        { name: '⏳ Status', value: 'Waiting for SMS code...', inline: false },
-        { name: '📝 Next Step', value: 'Enter this number on Instagram. The SMS code will arrive here automatically (up to 20 minutes).\n\n**Copy and paste the number above on Instagram.**', inline: false }
-      )
-      .setFooter({ text: 'Service 2' })
-      .setTimestamp();
-
-    const cancelBtn = new ButtonBuilder()
-      .setCustomId(`num_cancel_${orderId}`)
-      .setLabel('❌ Cancel')
-      .setStyle(ButtonStyle.Danger)
-      .setDisabled(false);
-
-    const row = new ActionRowBuilder().addComponents(cancelBtn);
-
-    await interaction.editReply({ embeds: [numberEmbed], components: [row] });
-
-    await logToAdmin(interaction.client, `📱 **${user.username}** requested a number — \`${formattedPhone}\``);
-
-    activationStore.set(`${orderId}_time`, Date.now());
-
-    startPolling(interaction.client, interaction, orderId, user.id, user.username, phoneNumber, '5sim');
-    return;
-  }
-
-  if (customId === 'ig_service_3_btn') {
-    const user = interaction.user;
-
-    await interaction.deferReply({ ephemeral: true });
-
     console.log(`[${new Date().toISOString()}] 🟢 Requesting HeroSMS number for ${user.username}...`);
     const result = await getHeroSmsNumber(process.env.HEROSMS_API_KEY, 'ig', '187');
     console.log(`[${new Date().toISOString()}] Result:`, result);
@@ -158,7 +100,7 @@ async function handleButtonClick(interaction) {
         { name: '⏳ Status', value: 'Waiting for SMS code...', inline: false },
         { name: '📝 Next Step', value: 'Enter this number on Instagram. The SMS code will arrive here automatically (up to 20 minutes).\n\n**Copy and paste the number above on Instagram.**', inline: false }
       )
-      .setFooter({ text: 'Service 3' })
+      .setFooter({ text: 'Service 2' })
       .setTimestamp();
 
     const cancelBtn = new ButtonBuilder()
@@ -179,7 +121,7 @@ async function handleButtonClick(interaction) {
     return;
   }
 
-  if (customId === 'ig_service_4_btn') {
+  if (customId === 'ig_service_3_btn') {
     const user = interaction.user;
 
     await interaction.deferReply({ ephemeral: true });
@@ -216,7 +158,7 @@ async function handleButtonClick(interaction) {
         { name: '⏳ Status', value: 'Waiting for SMS code...', inline: false },
         { name: '📝 Next Step', value: 'Enter this number on Instagram. The SMS code will arrive here automatically (up to 20 minutes).\n\n**Copy and paste the number above on Instagram.**', inline: false }
       )
-      .setFooter({ text: 'Service 4' })
+      .setFooter({ text: 'Service 3' })
       .setTimestamp();
 
     const cancelBtn = new ButtonBuilder()
@@ -237,7 +179,7 @@ async function handleButtonClick(interaction) {
     return;
   }
 
-  if (customId === 'ig_service_5_btn') {
+  if (customId === 'ig_service_4_btn') {
     const user = interaction.user;
 
     await interaction.deferReply({ ephemeral: true });
@@ -274,7 +216,7 @@ async function handleButtonClick(interaction) {
         { name: '⏳ Status', value: 'Waiting for SMS code...', inline: false },
         { name: '📝 Next Step', value: 'Enter this number on Instagram. The SMS code will arrive here automatically (up to 20 minutes).\n\n**Copy and paste the number above on Instagram.**', inline: false }
       )
-      .setFooter({ text: 'Service 5' })
+      .setFooter({ text: 'Service 4' })
       .setTimestamp();
 
     const cancelBtn = new ButtonBuilder()
@@ -295,7 +237,7 @@ async function handleButtonClick(interaction) {
     return;
   }
 
-  if (customId === 'ig_service_6_btn') {
+  if (customId === 'ig_service_5_btn') {
     const user = interaction.user;
 
     await interaction.deferReply({ ephemeral: true });
@@ -332,7 +274,7 @@ async function handleButtonClick(interaction) {
         { name: '⏳ Status', value: 'Waiting for SMS code...', inline: false },
         { name: '📝 Next Step', value: 'Enter this number on Instagram. The SMS code will arrive here automatically (up to 20 minutes).\n\n**Copy and paste the number above on Instagram.**', inline: false }
       )
-      .setFooter({ text: 'Service 6' })
+      .setFooter({ text: 'Service 5' })
       .setTimestamp();
 
     const cancelBtn = new ButtonBuilder()
