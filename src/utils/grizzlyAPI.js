@@ -570,6 +570,102 @@ async function rejectSmspinverifyNumber4(apiKey, numberId, phoneNumber) {
   return { success: !result.includes('error'), result };
 }
 
+function smsPoolRequest(apiKey, endpoint, params) {
+  return new Promise((resolve) => {
+    console.log(`[SMSPOOL] API Key present: ${apiKey ? 'YES' : 'NO'}, Key length: ${apiKey ? apiKey.length : 0}`);
+
+    const bodyParams = { ...params, key: apiKey };
+    const searchParams = new URLSearchParams(bodyParams);
+    const urlString = `https://api.smspool.net${endpoint}`;
+    const parsedUrl = new URL(urlString);
+
+    const options = {
+      hostname: parsedUrl.hostname,
+      path: parsedUrl.pathname,
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'User-Agent': 'GrizzlyBot/1.0',
+      },
+    };
+
+    console.log(`[SMSPOOL] Request URL: ${urlString}`);
+
+    const request = https.request(options, (res) => {
+      let data = '';
+
+      res.on('data', (chunk) => {
+        data += chunk;
+      });
+
+      res.on('end', () => {
+        console.log(`[SMSPOOL] Status: ${res.statusCode}, Response: ${data}`);
+        try {
+          const parsed = JSON.parse(data);
+          resolve(parsed);
+        } catch (e) {
+          console.error(`[SMSPOOL] Parse Error: ${e.message}, Response: ${data}`);
+          resolve({ error: data.trim() || 'INVALID_JSON', details: data });
+        }
+      });
+    });
+
+    request.on('error', (err) => {
+      console.error(`[SMSPOOL] Request Error: ${err.message}`);
+      resolve({ error: 'NETWORK_ERROR', details: err.message });
+    });
+
+    request.write(searchParams.toString());
+    request.end();
+  });
+}
+
+async function getSmsPoolNumber(apiKey, service = 457, country = 1) {
+  const result = await smsPoolRequest(apiKey, '/purchase/sms', {
+    service,
+    country,
+  });
+
+  if (result.success && result.order_id && result.phonenumber) {
+    return {
+      success: true,
+      orderId: result.order_id,
+      phoneNumber: result.phonenumber,
+    };
+  }
+
+  return {
+    success: false,
+    error: result.error || 'UNKNOWN_ERROR',
+  };
+}
+
+async function getSmsPoolStatus(apiKey, orderId) {
+  const result = await smsPoolRequest(apiKey, '/sms/check', {
+    orderid: orderId,
+  });
+
+  if (result.success && result.sms) {
+    return {
+      status: 'STATUS_OK',
+      code: result.sms,
+    };
+  }
+
+  if (result.success === 0) {
+    return { status: 'STATUS_WAIT_CODE' };
+  }
+
+  return { error: result.error || 'UNKNOWN_ERROR' };
+}
+
+async function cancelSmsPoolOrder(apiKey, orderId) {
+  const result = await smsPoolRequest(apiKey, '/sms/cancel', {
+    orderid: orderId,
+  });
+  return { success: result.success === 1, result };
+}
+
 function getErrorMessage(error) {
   const messages = {
     NO_NUMBERS: 'No numbers available right now. Try again in a few minutes.',
@@ -614,4 +710,7 @@ module.exports = {
   getHeroSmsPhysicNumber,
   getHeroSmsPhysicStatus,
   cancelHeroSmsPhysicOrder,
+  getSmsPoolNumber,
+  getSmsPoolStatus,
+  cancelSmsPoolOrder,
 };
