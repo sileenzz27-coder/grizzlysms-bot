@@ -334,6 +334,75 @@ async function finishHeroSmsOrder(apiKey, activationId) {
   return { success: !result.error, result };
 }
 
+async function getHeroSmsPhysicNumber(apiKey, country = '187') {
+  const result = await heroSmsRequest(apiKey, {
+    action: 'getNumberV2',
+    service: 'physic',
+    country,
+  });
+
+  if (result.activationId && result.phoneNumber) {
+    return {
+      success: true,
+      activationId: result.activationId,
+      phoneNumber: result.phoneNumber,
+      activationCost: result.activationCost,
+    };
+  }
+
+  return {
+    success: false,
+    error: result.error || 'UNKNOWN_ERROR',
+  };
+}
+
+async function getHeroSmsPhysicStatus(apiKey, activationId) {
+  const result = await heroSmsRequest(apiKey, {
+    action: 'getStatusV2',
+    id: activationId,
+  });
+
+  if (result.error) {
+    return { error: result.error };
+  }
+
+  if (typeof result === 'string') {
+    if (result.startsWith('STATUS_OK:')) {
+      const code = result.split(':')[1];
+      return { code, status: 'STATUS_OK' };
+    }
+    if (result === 'STATUS_WAIT_CODE' || result === 'STATUS_WAIT_RESEND') {
+      return { status: result };
+    }
+    if (result === 'STATUS_CANCEL') {
+      return { status: 'STATUS_CANCEL' };
+    }
+    return { status: result };
+  }
+
+  if (result.sms) {
+    let code;
+    if (Array.isArray(result.sms) && result.sms.length > 0) {
+      code = result.sms[0].code;
+    } else if (typeof result.sms === 'object' && result.sms.code) {
+      code = result.sms.code;
+    }
+    if (code) {
+      return { code, status: 'STATUS_OK' };
+    }
+  }
+
+  return { status: 'STATUS_WAIT_CODE' };
+}
+
+async function cancelHeroSmsPhysicOrder(apiKey, activationId) {
+  const result = await heroSmsRequest(apiKey, {
+    action: 'cancelActivation',
+    id: activationId,
+  });
+  return { success: !result.error, result };
+}
+
 function smspinverifyRequest(apiKey, endpoint, params = {}) {
   return new Promise((resolve) => {
     console.log(`[SMSPINVERIFY] API Key present: ${apiKey ? 'YES' : 'NO'}`);
@@ -529,4 +598,7 @@ module.exports = {
   getSmspinverifyNumber4,
   getSmspinverifyStatus4,
   rejectSmspinverifyNumber4,
+  getHeroSmsPhysicNumber,
+  getHeroSmsPhysicStatus,
+  cancelHeroSmsPhysicOrder,
 };

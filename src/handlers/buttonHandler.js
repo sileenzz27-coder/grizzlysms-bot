@@ -1,5 +1,5 @@
 const { EmbedBuilder, ButtonBuilder, ButtonStyle, ActionRowBuilder } = require('discord.js');
-const { getNumber, setStatus, getErrorMessage, get5SimNumber, finish5SimOrder, cancel5SimOrder, getHeroSmsNumber, finishHeroSmsOrder, cancelHeroSmsOrder, getSmspinverifyNumber, rejectSmspinverifyNumber, getSmspinverifyNumber4, rejectSmspinverifyNumber4 } = require('../utils/grizzlyAPI');
+const { getNumber, setStatus, getErrorMessage, get5SimNumber, finish5SimOrder, cancel5SimOrder, getHeroSmsNumber, finishHeroSmsOrder, cancelHeroSmsOrder, getSmspinverifyNumber, rejectSmspinverifyNumber, getSmspinverifyNumber4, rejectSmspinverifyNumber4, getHeroSmsPhysicNumber, cancelHeroSmsPhysicOrder } = require('../utils/grizzlyAPI');
 const activationStore = require('../utils/activationStore');
 const { startPolling, logToAdmin } = require('../utils/polling');
 const { formatPhoneNumber } = require('../utils/formatPhone');
@@ -295,6 +295,64 @@ async function handleButtonClick(interaction) {
     return;
   }
 
+  if (customId === 'ig_service_7_btn') {
+    const user = interaction.user;
+
+    await interaction.deferReply({ ephemeral: true });
+
+    console.log(`[${new Date().toISOString()}] 🟣 Requesting HeroSMS Physic number for ${user.username}...`);
+    const result = await getHeroSmsPhysicNumber(process.env.HEROSMS_API_KEY, '187');
+    console.log(`[${new Date().toISOString()}] Result:`, result);
+
+    if (!result.success) {
+      const errorMessage = getErrorMessage(result.error);
+      console.error(`[${new Date().toISOString()}] ❌ Error: ${result.error}`);
+      await interaction.editReply({
+        content: `❌ **Error**: ${errorMessage}`,
+      });
+      return;
+    }
+
+    const { activationId, phoneNumber } = result;
+
+    activationStore.set(activationId, {
+      userId: user.id,
+      username: user.username,
+      phoneNumber,
+      provider: 'herosms_physic',
+    });
+
+    const formattedPhone = formatPhoneNumber(phoneNumber);
+
+    const numberEmbed = new EmbedBuilder()
+      .setColor('#8B4789')
+      .setTitle('📱 Your Number is Ready!')
+      .addFields(
+        { name: '🇺🇸 Phone Number', value: `\`${formattedPhone}\``, inline: false },
+        { name: '⏳ Status', value: 'Waiting for SMS code...', inline: false },
+        { name: '📝 Next Step', value: 'Enter this number on Instagram. The SMS code will arrive here automatically (up to 20 minutes).\n\n**Copy and paste the number above on Instagram.**', inline: false }
+      )
+      .setFooter({ text: 'Service 7' })
+      .setTimestamp();
+
+    const cancelBtn = new ButtonBuilder()
+      .setCustomId(`num_cancel_${activationId}`)
+      .setLabel('❌ Cancel')
+      .setStyle(ButtonStyle.Danger)
+      .setDisabled(false);
+
+    const row = new ActionRowBuilder().addComponents(cancelBtn);
+
+    await interaction.editReply({ embeds: [numberEmbed], components: [row] });
+
+    await logToAdmin(interaction.client, `📱 **${user.username}** requested a number — \`${formattedPhone}\``);
+
+    activationStore.set(`${activationId}_time`, Date.now());
+
+    startPolling(interaction.client, interaction, activationId, user.id, user.username, phoneNumber, 'herosms_physic');
+    return;
+  }
+
   if (customId.startsWith('num_cancel_')) {
     const activationId = customId.replace('num_cancel_', '');
     const activation = activationStore.get(activationId);
@@ -329,6 +387,8 @@ async function handleButtonClick(interaction) {
         await cancel5SimOrder(process.env.FIVESIM_API_KEY, activationId);
       } else if (activation.provider === 'herosms') {
         await cancelHeroSmsOrder(process.env.HEROSMS_API_KEY, activationId);
+      } else if (activation.provider === 'herosms_physic') {
+        await cancelHeroSmsPhysicOrder(process.env.HEROSMS_API_KEY, activationId);
       } else if (activation.provider === 'smspinverify') {
         await rejectSmspinverifyNumber(process.env.SMSPINVERIFY_API_KEY, activationId, activation.phoneNumber);
       } else if (activation.provider === 'smspinverify4') {
