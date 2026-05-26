@@ -645,18 +645,20 @@ async function getSmsPoolStatus(apiKey, orderId) {
     orderid: orderId,
   });
 
-  if (result.success && result.sms) {
-    return {
-      status: 'STATUS_OK',
-      code: result.sms,
-    };
-  }
-
-  if (result.success === 0) {
+  // Success = 1 means order exists, check if SMS received
+  if (result.success === 1) {
+    if (result.sms && result.sms !== '') {
+      return {
+        status: 'STATUS_OK',
+        code: result.sms,
+      };
+    }
+    // No SMS yet, keep waiting
     return { status: 'STATUS_WAIT_CODE' };
   }
 
-  return { error: result.error || 'UNKNOWN_ERROR' };
+  // Success = 0 means error or order not found
+  return { error: result.error || (result.message || 'UNKNOWN_ERROR') };
 }
 
 async function cancelSmsPoolOrder(apiKey, orderId) {
