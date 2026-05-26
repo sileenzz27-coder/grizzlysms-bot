@@ -33,6 +33,7 @@ client.once('ready', async () => {
 
   try {
     const commands = [setup.data, getnumber.data];
+    console.log(`[DEBUG] Registering ${commands.length} commands:`, commands.map(c => c.name));
     await rest.put(Routes.applicationCommands(client.user.id), { body: commands });
     console.log('✅ Slash commands registered');
   } catch (err) {

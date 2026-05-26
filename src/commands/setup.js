@@ -44,11 +44,12 @@ const setup = {
       .setLabel('📱 Service 6')
       .setStyle(ButtonStyle.Secondary);
 
-    const row = new ActionRowBuilder().addComponents(service1Btn, service2Btn, service3Btn, service4Btn, service5Btn, service6Btn);
+    const row1 = new ActionRowBuilder().addComponents(service1Btn, service2Btn, service3Btn, service4Btn, service5Btn);
+    const row2 = new ActionRowBuilder().addComponents(service6Btn);
 
     await interaction.reply({
       embeds: [setupEmbed],
-      components: [row],
+      components: [row1, row2],
     });
 
     try {
