@@ -433,6 +433,61 @@ async function rejectSmspinverifyNumber(apiKey, numberId, phoneNumber) {
   return { success: !result.includes('error'), result };
 }
 
+async function getSmspinverifyNumber4(apiKey, country = 'USA') {
+  const result = await smspinverifyRequest(apiKey, 'user/get_number', {
+    app: 'Instagram 4',
+    country,
+    shownid: 1,
+    duration: '15 minutes'
+  });
+
+  if (typeof result === 'string' && result.includes('|')) {
+    const [phoneNumber, numberId] = result.split('|');
+    return {
+      success: true,
+      numberId,
+      phoneNumber,
+    };
+  }
+
+  return {
+    success: false,
+    error: result || 'UNKNOWN_ERROR',
+  };
+}
+
+async function getSmspinverifyStatus4(apiKey, numberId, phoneNumber) {
+  const result = await smspinverifyRequest(apiKey, 'json/get_sms', {
+    n_id: numberId
+  });
+
+  if (typeof result === 'string' && result.match(/\d+\s*\d+/)) {
+    const codeWithSpace = result.match(/\d+\s*\d+/)[0];
+    const code = codeWithSpace.replace(/\s+/g, '');
+    return { code, status: 'STATUS_OK' };
+  }
+
+  if (typeof result === 'string' && result.toLowerCase().includes('not received')) {
+    return { status: 'STATUS_WAIT_CODE' };
+  }
+
+  if (typeof result === 'string' && result.toLowerCase().includes('error')) {
+    return { error: result };
+  }
+
+  return { status: 'STATUS_WAIT_CODE' };
+}
+
+async function rejectSmspinverifyNumber4(apiKey, numberId, phoneNumber) {
+  const result = await smspinverifyRequest(apiKey, 'user/reject_code', {
+    number: phoneNumber,
+    n_id: numberId,
+    country: 'USA',
+    app: 'Instagram 4'
+  });
+  return { success: !result.includes('error'), result };
+}
+
 function getErrorMessage(error) {
   const messages = {
     NO_NUMBERS: 'No numbers available right now. Try again in a few minutes.',
@@ -471,4 +526,7 @@ module.exports = {
   getSmspinverifyNumber,
   getSmspinverifyStatus,
   rejectSmspinverifyNumber,
+  getSmspinverifyNumber4,
+  getSmspinverifyStatus4,
+  rejectSmspinverifyNumber4,
 };
