@@ -16,27 +16,27 @@ const setup = {
 
     const service1Btn = new ButtonBuilder()
       .setCustomId('ig_service_1_btn')
-      .setLabel('📱 Service 1 - Grizzly')
+      .setLabel('📱 Service 1')
       .setStyle(ButtonStyle.Primary);
 
     const service2Btn = new ButtonBuilder()
       .setCustomId('ig_service_2_btn')
-      .setLabel('📱 Service 2 - HeroSMS')
+      .setLabel('📱 Service 2')
       .setStyle(ButtonStyle.Secondary);
 
     const service3Btn = new ButtonBuilder()
       .setCustomId('ig_service_3_btn')
-      .setLabel('📱 Service 3 - Smspinverify')
+      .setLabel('📱 Service 3')
       .setStyle(ButtonStyle.Secondary);
 
     const service4Btn = new ButtonBuilder()
       .setCustomId('ig_service_4_btn')
-      .setLabel('📱 Service 4 - Smspinverify (New)')
+      .setLabel('📱 Service 4')
       .setStyle(ButtonStyle.Secondary);
 
     const service5Btn = new ButtonBuilder()
       .setCustomId('ig_service_5_btn')
-      .setLabel('📱 Service 5 - HeroSMS Physic')
+      .setLabel('📱 Service 5')
       .setStyle(ButtonStyle.Secondary);
 
     const row1 = new ActionRowBuilder().addComponents(service1Btn, service2Btn, service3Btn, service4Btn, service5Btn);
